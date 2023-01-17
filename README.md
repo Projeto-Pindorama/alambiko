@@ -39,9 +39,9 @@ unarchive() {
 }
 
 configure() {
-	./configure --prefix=$PREFIX \
-		--libdir=$LIBDIR \
-		--pkgconfigdir=$PKGCONFDIR
+	./configure --prefix=/usr \
+		--libdir=/lib \
+		--pkgconfigdir=/usr/share/lib/pkgconfig
 }
 
 build() {
