@@ -1,0 +1,61 @@
+# vim: set filetype=sh :
+Name="Standard C library"
+Vendor="musl"
+Description="The musl C library implementation"
+Version="1.2.3"
+Archive_name="musl-$Version.tar.gz"
+Maintainer="Luiz Antônio Rangel"
+Hotline="luiz.antonio.rangel@outlook.com.br"
+
+unarchive() {
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+}
+
+configure() {
+	if [[ "$VARIANT" == "base" ]]; then
+		Destdir="$PKGDIR/musl-$Version"
+		LDFLAGS="-Wl,-soname,libc.musl-$(uname -m).so.1"
+		configure_opts=( "--prefix=/usr"
+			"--sysconfdir=/etc"
+			"--localstatedir=/var"
+			"--mandir=/usr/share/man"
+			"--infodir=/usr/share/info"
+			"--disable-gcc-wrapper" )
+	elif [[ "$VARIANT" == "tools" ]]; then
+		Destdir="$PKGDIR/${VARIANT}" # Installs directly to /tools
+		configure_opts=( "CROSS_COMPILE=${COPA_TARGET}-"
+			"--prefix=/"
+			"--target=${COPA_TARGET}" )
+	fi
+}
+
+post() {
+	if [[ "$VARIANT" == "base" ]]; then
+		cd $Destdir; \
+		rm "./lib/ld-musl-$(uname -m).so" \
+		&& mv ./usr/lib/libc.so "./lib/ld-musl-$(uname -m).so.1" \
+		&& ln -s "./lib/ld-musl-$(uname -m).so.1" ./usr/lib/libc.so \
+		&& ln "./lib/ld-musl-$(uname -m).so.1" \
+			"./lib/libc.musl-$(uname -m).so.1" \
+		&& ln "./lib/ld-musl-$(uname -m).so.1" ./bin/ldd \
+		&& printf '/lib\n/usr/lib' \
+			> "./etc/ld-musl-$(uname -m).path"
+	elif [[ "$VARIANT" == "tools" ]]; then
+		cd $Destdir; \
+		rm "./lib/ld-musl-$(uname -m).so.1" \
+		&& ln -s ./lib/libc.so "./lib/ld-musl-$(uname -m).so.1"; \
+		&& mkdir -pv ./etc/ \ 
+		&& printf '/tools/lib' \
+		> "./etc/ld-musl-$(uname -m).path";
+	fi
+}
+
+build() {
+	unarchive
+	configure
+	cd "$OBJDIR/musl-$Version" \
+	&& ./configure ${configure_opts[@]} \
+	&& gmake -j$THREADS \
+	&& DESTDIR="$Destdir" gmake install \
+	&& post
+}
