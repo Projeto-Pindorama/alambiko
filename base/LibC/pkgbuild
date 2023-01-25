@@ -29,33 +29,43 @@ configure() {
 	fi
 }
 
-post() {
+post_install() {
 	if [[ "$VARIANT" == "base" ]]; then
-		cd $Destdir; \
-		rm "./lib/ld-musl-$(uname -m).so" \
-		&& mv ./usr/lib/libc.so "./lib/ld-musl-$(uname -m).so.1" \
-		&& ln -s "./lib/ld-musl-$(uname -m).so.1" ./usr/lib/libc.so \
-		&& ln "./lib/ld-musl-$(uname -m).so.1" \
-			"./lib/libc.musl-$(uname -m).so.1" \
-		&& ln "./lib/ld-musl-$(uname -m).so.1" ./bin/ldd \
-		&& printf '/lib\n/usr/lib' \
+		pushd "$Destdir"
+	
+		rm "./lib/ld-musl-$(uname -m).so"
+	
+		mv ./usr/lib/libc.so "./lib/ld-musl-$(uname -m).so.1"
+	
+		ln -s "./lib/ld-musl-$(uname -m).so.1" ./usr/lib/libc.so
+		ln "./lib/ld-musl-$(uname -m).so.1" \
+			"./lib/libc.musl-$(uname -m).so.1"
+		ln "./lib/ld-musl-$(uname -m).so.1" ./bin/ldd
+	
+		printf '/lib\n/usr/lib' \
 			> "./etc/ld-musl-$(uname -m).path"
+	
+		popd
 	elif [[ "$VARIANT" == "tools" ]]; then
-		cd $Destdir; \
-		rm "./lib/ld-musl-$(uname -m).so.1" \
-		&& ln -s ./lib/libc.so "./lib/ld-musl-$(uname -m).so.1"; \
-		&& mkdir -pv ./etc/ \ 
-		&& printf '/tools/lib' \
-		> "./etc/ld-musl-$(uname -m).path";
+		pushd "$Destdir"
+		
+		rm "./lib/ld-musl-$(uname -m).so.1"
+
+		ln -s ./lib/libc.so "./lib/ld-musl-$(uname -m).so.1"
+		
+		mkdir ./etc/
+		printf '/tools/lib' \
+			> "./etc/ld-musl-$(uname -m).path"
+		popd
 	fi
 }
 
 build() {
 	unarchive
 	configure
-	cd "$OBJDIR/musl-$Version" \
-	&& ./configure ${configure_opts[@]} \
-	&& gmake -j$THREADS \
-	&& DESTDIR="$Destdir" gmake install \
-	&& post
+	cd "$OBJDIR/musl-$Version"
+	./configure ${configure_opts[@]}
+	gmake -j$THREADS
+	DESTDIR="$Destdir" gmake install
+	post_install
 }
