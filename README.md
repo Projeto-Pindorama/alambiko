@@ -9,15 +9,11 @@ many others.
 
 "Alambiko" (ˌalambˈiko) means "alembic" in Esperanto.
 
-## ``pkgbuild`` template
+## Chip in!
 
-Below theres an example of a ``pkgbuild`` file. Some functions, such as ``c()``,
-are present in the script that will run the instructions present at those files.  
-For now, this is a big W.I.P., since how everything will work still being
-discussed. If you have any suggestions, open an Issue. 
-The main idea of this is to provide both a less laborous way to build Copacabana
-from source, using a build consolidation and to provide references for other
-folks building musl C library-based Linux distributions. 
+### ``pkgbuild`` template
+
+Below there is an example of a ``pkgbuild`` file.
 
 ```sh
 # vim: set filetype=sh :
@@ -33,9 +29,7 @@ Hotline="irineu.evangelista@correios.gov.br"
 Destdir="/usr/tmp/fuba-$Version"
 
 unarchive() {
-	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR" \
-		&& chdir "$OBJDIR/fuba_$Version"
-
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
 }
 
 configure() {
@@ -44,14 +38,35 @@ configure() {
 		--pkgconfigdir=/usr/share/lib/pkgconfig
 }
 
+post_install() { return 0; }
+
 build() {
 	unarchive
+	pushd "$OBJDIR/fuba_$Version"
 	configure
-	gmake -j$THREADS \ 
-		&& DESTDIR="$Destdir" gmake install
+	gmake -j$(nproc)
+	DESTDIR="$Destdir" gmake install
+	popd
+	post_install
 }
 ```
+
+These are the functions currently implemented and ready to use on pkgbuilds:
+
+| Function identifier | Description |
+|---|---|
+| ``basename`` | Strips directory and suffix from filenames. |
+| ``c`` | Wrapper for decompressors that supports writing<br>the decompressed data to the standard output.<br>Currently it supports cat (for tarballs without<br>compression), bzip2, gzip and xz. |
+| ``lines`` | Counts the quantity of lines, like ``wc -l``. |
+| ``n`` | Counts elements. It's a workaround for the ``#``<br>macro present in GNU Broken-Again Shell 4.3, but<br>you can use it instead the aforesaid macro in<br>any shell that support arrays. |
+| ``nproc`` | Counts processors in the machine, multiplatform (can<br>run on \*BSD, Darwin (MacOS), Linux and SunOS); |
+| ``printerr`` | Prints messages to the standard error output |
+| ``pushd`` | Push a directory onto a stack. |
+| ``popd`` | "Pop" (remove) an directory from the stack and<br>changes into the last. |
+| ``realpath`` | Gets the real path to files. |
+| ``timeout`` | Runs a commmand with time limit. |
 
 ## Licence
 
 The UUIC/NCSA licence, as Copacabana work itself.
+
