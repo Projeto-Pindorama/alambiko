@@ -27,6 +27,7 @@ configure() {
 			"--prefix=/"
 			"--target=${COPA_TARGET}" )
 	fi
+	./configure ${configure_opts[@]}
 }
 
 post_install() {
@@ -62,10 +63,10 @@ post_install() {
 
 build() {
 	unarchive
+	pushd "$OBJDIR/musl-$Version"
 	configure
-	cd "$OBJDIR/musl-$Version"
-	./configure ${configure_opts[@]}
-	gmake -j$THREADS
+	gmake -j$(nproc)
 	DESTDIR="$Destdir" gmake install
+	popd
 	post_install
 }
