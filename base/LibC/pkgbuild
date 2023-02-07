@@ -8,7 +8,7 @@ Maintainer="Luiz Antônio Rangel"
 Hotline="luiz.antonio.rangel@outlook.com.br"
 
 unarchive() {
-	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+	c -cd "./$Archive_name" | tar -xvf - -C "$OBJDIR"
 }
 
 configure() {
@@ -62,11 +62,6 @@ post_install() {
 }
 
 build() {
-	unarchive
-	pushd "$OBJDIR/musl-$Version"
-	configure
-	gmake -j$(nproc)
-	DESTDIR="$Destdir" gmake install
-	popd
-	post_install
+	gmake -j$(nproc) \
+	&& DESTDIR="$Destdir" gmake install
 }

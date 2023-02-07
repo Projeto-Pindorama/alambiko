@@ -41,15 +41,13 @@ configure() {
 post_install() { return 0; }
 
 build() {
-	unarchive
-	pushd "$OBJDIR/fuba_$Version"
-	configure
-	gmake -j$(nproc)
-	DESTDIR="$Destdir" gmake install
-	popd
-	post_install
+	gmake -j$(nproc) \
+	&& DESTDIR="$Destdir" gmake install
 }
 ```
+
+All the functions defined above will be run by a script, it's not meant to be
+called from ``build()`` anymore.
 
 These are the functions currently implemented and ready to use on pkgbuilds:
 
