@@ -13,27 +13,31 @@ unarchive() {
 
 configure() {
 	if [[ "$VARIANT" == "base" ]]; then
-		Destdir="$PKGDIR/musl-$Version"
+		patches=( "fix-paths.patch"
+			"handle-aux-at_base.patch"
+			"syscall-cp-epoll.patch")
+
 		LDFLAGS="-Wl,-soname,libc.musl-$(uname -m).so.1"
+
 		configure_opts=( "--prefix=/usr"
 			"--sysconfdir=/etc"
 			"--localstatedir=/var"
 			"--mandir=/usr/share/man"
 			"--infodir=/usr/share/info"
 			"--disable-gcc-wrapper" )
+
 	elif [[ "$VARIANT" == "tools" ]]; then
-		Destdir="$PKGDIR/${VARIANT}" # Installs directly to /tools
+
 		configure_opts=( "CROSS_COMPILE=${COPA_TARGET}-"
 			"--prefix=/"
 			"--target=${COPA_TARGET}" )
+
 	fi
 	./configure ${configure_opts[@]}
 }
 
 post_install() {
 	if [[ "$VARIANT" == "base" ]]; then
-		pushd "$Destdir"
-	
 		rm "./lib/ld-musl-$(uname -m).so"
 	
 		mv ./usr/lib/libc.so "./lib/ld-musl-$(uname -m).so.1"
@@ -45,11 +49,9 @@ post_install() {
 	
 		printf '/lib\n/usr/lib' \
 			> "./etc/ld-musl-$(uname -m).path"
-	
-		popd
+
 	elif [[ "$VARIANT" == "tools" ]]; then
-		pushd "$Destdir"
-		
+
 		rm "./lib/ld-musl-$(uname -m).so.1"
 
 		ln -s ./lib/libc.so "./lib/ld-musl-$(uname -m).so.1"
@@ -57,7 +59,7 @@ post_install() {
 		mkdir ./etc/
 		printf '/tools/lib' \
 			> "./etc/ld-musl-$(uname -m).path"
-		popd
+
 	fi
 }
 
