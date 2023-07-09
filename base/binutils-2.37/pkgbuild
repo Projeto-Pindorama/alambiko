@@ -1,0 +1,38 @@
+#!/bin/ksh
+Name="binutils"
+Vendor="Free Software Foundation"
+Description="The GNU Binutils are a collection of binary tools."
+Version="2.37"
+Archive_name="binutils-$Version.tar.xz"
+Depends_on=("", "")
+Maintainer="Marco Tulio Dueñas"
+Hotline="marcot.dns@gmail.com"
+
+Destdir="/tools"
+
+unarchive() {
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+}
+
+configure() {
+	mkdir build \
+		&& cd build \
+		&& sh ../configure --prefix=/tools      \
+		--with-lib-path=/tools/lib \
+		--build=${COPA_HOST}       \
+		--host=${COPA_TARGET}      \
+		--target=${COPA_TARGET}    \
+		--disable-nls              \
+		--disable-werror           \
+		--with-sysroot
+}
+
+post_install(){ 
+		cp ld/ld-new /tools/bin
+}
+
+build() {
+		gmake -j$(grep -c 'processor' /proc/cpuinfo) && gmake install
+		gmake -C ld clean
+		gmake -C ld LIB_PATH='/lib:/usr/lib'
+}

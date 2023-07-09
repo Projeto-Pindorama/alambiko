@@ -1,0 +1,36 @@
+#!/bin/ksh
+Name="musl"
+Vendor="musl C libary developers"
+Description="musl is an implementation of the C standard library built on top of the Linux system call API, including interfaces defined in the base language standard, POSIX, and widely agreed-upon extensions."
+Version="1.2.3"
+Archive_name="musl-$Version.tar.xz"
+Depends_on=("base/kernel-headers", "base/LibC")
+Maintainer="Marco Tulio Dueñas"
+Hotline="marcot.dns@gmail.com"
+
+Destdir="/tools"
+
+unarchive() {
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+}
+
+configure() {
+	./configure \
+		CROSS_COMPILE=${COPA_TARGET} \
+		--prefix=/ \
+		--target=${COPA_TARGET}
+}
+
+post_install(){ 
+	rm -vf /tools/lib/ld-musl-$(uname -m).so.1
+	ln -s /tools/lib/libc.so /tools/lib/ld-musl-$(uname -m).so.1
+	mkdir -pv /tools/etc  \
+		&& cat > /tools/etc/ld-musl-$(uname -m).path << "EOF" /tools/lib 
+EOF
+
+}
+
+build() {
+	gmake -j$(nproc) \
+	&& DESTDIR="$Destdir" gmake install
+}
