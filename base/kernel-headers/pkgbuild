@@ -1,0 +1,32 @@
+Name="Linux Headers"
+Vendor="Linux Kernel Organization"
+Description="C header files that are responsible for define data that is necessary for building most of the standard programs"
+Version="5.15.103"
+Archive_name="linux-.$Version.tar.xz"
+Depends_on=("base/kernel-headers", "base/LibC")
+Maintainer="Marco Tulio Dueñas"
+Hotline="marcot.dns@gmail.com"
+
+Destdir="/usr/tmp/fuba-$Version"
+
+unarchive() {
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+}
+
+
+#configure() {
+#		./configure --prefix=/usr \
+#		--libdir=/lib \
+#		--pkgconfigdir=/usr/share/lib/pkgconfig
+#}
+
+post_install() { 
+	cp -rv usr/include/* /tools/include
+	find /tools/include \( -name '.*' -o -name '.*.cmd' \) -exec rm -vf {} \;
+	rm -v /tools/include/Makefile
+	return 0; 
+}
+
+build() {
+	gmake headers
+}
