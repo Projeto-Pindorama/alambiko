@@ -1,0 +1,34 @@
+# vim: set filetype=sh :
+Name="File"
+Vendor="Astron Software"
+Description="File type guesser"
+Version="5.42"
+Archive_name="file-$Version.tar.xz"
+Depends_on=("base/kernel-headers", "base/LibC")
+Maintainer="Luiz Antônio Rangel"
+Hotline="https://github.com/Projeto-Pindorama/copacabana/issues"
+
+unarchive() {
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+}
+
+configure() {
+	set -x
+	if [[ ! -z $VARIANT || $VARIANT == "base" ]]; then
+		# To be written.
+		return 0	
+	elif [[ $VARIANT == "tools" ]]; then
+		execscript ./configure --prefix=/tools \
+			--host=$COPA_TARGET \
+			--build=$COPA_HOST
+	elif [[ $VARIANT == "cross-tools" ]]; then
+		execscript ./configure --prefix=/cross-tools \
+			--disable-libseccomp
+	fi
+	export Destdir="$package_dir/$VARIANT/$Name-$Version"
+}
+
+build() {
+	gmake -j$(nproc) \
+	&& DESTDIR="$Destdir" gmake install
+}
