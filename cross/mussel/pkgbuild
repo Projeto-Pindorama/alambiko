@@ -1,0 +1,31 @@
+Name="mussel"
+Vendor="Firas Khalil Khana"
+Description="The shortest and fastest script to build working cross compilers targeting musl libc"
+Version="main"
+Archive_name="$Version.tar.gz"
+Depends_on=()
+Maintainer="Luiz Antônio Rangel"
+Hotline="luiz.antonio.rangel@outlook.com.br"
+
+Destdir="/cgnutools"
+
+unarchive() {
+	c -cd "$Archive_name" | tar -xvf - -C "$OBJDIR"
+}
+
+configure() {
+	execscript check.sh
+}
+
+build() {
+	export mussel_directory="$(pwd)" 
+	execscript ./mussel.sh "$(uname -m)" -l -o -k -p
+}
+
+make_pkg() {
+	mussel_PREFIX="$mussel_directory/toolchain"
+	mussel_SYSROOT="$mussel_directory/sysroot"
+
+	(cd "$mussel_SYSROOT"; tar -cvf - . | tar -xvf - -C $Destdir) \
+	&& (cd "$mussel_PREFIX"; tar -cvf - . | tar -xvf - -C $Destdir)
+}
