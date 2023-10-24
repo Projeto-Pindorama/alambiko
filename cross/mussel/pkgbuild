@@ -26,6 +26,16 @@ make_pkg() {
 	mussel_PREFIX="$mussel_directory/toolchain"
 	mussel_SYSROOT="$mussel_directory/sysroot"
 
-	(cd "$mussel_SYSROOT"; tar -cvf - . | tar -xvf - -C $Destdir) \
-	&& (cd "$mussel_PREFIX"; tar -cvf - . | tar -xvf - -C $Destdir)
+	(cd "$mussel_SYSROOT"; tar -cvf - . | tar -xvf - -C "$Destdir") \
+	&& (cd "$mussel_PREFIX"; tar -cvf - . | tar -xvf - -C "$Destdir")
+}
+
+post_install() {
+	mv $Destdir/usr/lib/* "$Destdir/lib/"
+	mv  $Destdir/usr/include/* "$Destdir/include/"
+	rmdir $(eval echo "$Destdir/usr/{include,lib}")
+	ln -s '../lib' "$Destdir/usr/lib"
+	ln -s '../include' "$Destdir/usr/include"
+	"$Destdir/bin/${TARGET_TUPLE}-gcc" -dumpspecs \
+		| sed "s@/lib/ld-musl@/llvmtools/lib/ld-musl@g; w /cgnutools/lib/gcc/${TARGET_TUPLE}/12.2.0/specs"	
 }
