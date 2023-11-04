@@ -14,20 +14,24 @@ unarchive() {
 }
 
 configure() {
-	execscript check.sh
+	cd "${Name}-${Version}"
+	./check.sh
 }
 
 build() {
-	export mussel_directory="$(pwd)" 
-	execscript ./mussel.sh "$(uname -m)" -l -o -k -p
+	cd "${Name}-${Version}"
+	./mussel.sh "$(uname -m)" -l -o -k -p
 }
 
 make_pkg() {
+	set -x
+	cd "${Name}-${Version}"
+	mussel_directory="$(pwd)"
 	mussel_PREFIX="$mussel_directory/toolchain"
 	mussel_SYSROOT="$mussel_directory/sysroot"
 
-	(cd "$mussel_SYSROOT"; tar -cvf - . | tar -xvf - -C "$Destdir") \
-	&& (cd "$mussel_PREFIX"; tar -cvf - . | tar -xvf - -C "$Destdir")
+	(cd "$mussel_SYSROOT"; tar -cf - . | tar -xf - -C "$Destdir") \
+	&& (cd "$mussel_PREFIX"; tar -cf - . | tar -xf - -C "$Destdir")
 }
 
 post_install() {
