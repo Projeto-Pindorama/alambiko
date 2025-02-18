@@ -32,8 +32,13 @@ if [[ $stage =~ (first|second) ]]; then
 	cat "$trash/LLVM-test-linux-ld.c" >./clang/test/Driver/linux-ld.c
 	# Built llvm-tblgen will need libstdc++.so.6 & libgcc_s.so.1.
 	# Set the rpath
-	CFLAGS='-O0 -g0 -pipe -fPIC -I/cgnutools/include -Wl,-rpath=/cgnutools/lib'
-	LDFLAGS='-L/cgnutools/lib -L/llvmtools/lib'
+	CFLAGS='-O0 -g0 -pipe -fPIC -I/cgnutools/include'
+	# Set the compiler and linker flags...
+	case $stage in
+		'first')
+			CFLAGS+=' -Wl,-rpath=/cgnutools/lib'
+			;;
+	esac
 
 	# Set the compiler and linker flags...
 	case $stage in
@@ -147,22 +152,18 @@ if [[ $stage =~ (first|second) ]]; then
 	COFF='-DLLVM_ENABLE_ZSTD=OFF -DLLVM_ENABLE_LIBEDIT=OFF '
 	COFF+='-DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_LIBEDIT=OFF '
 	COFF+='-DLLVM_ENABLE_TERMINFO=OFF -DLLVM_ENABLE_LIBPFM=OFF '
-	COFF+='-DLLVM_INCLUDE_BENCHMARKS=OFF '
-else                # final or clang rebuild
-	LDFLAGS="$LDFLAGS"
-fi
+fi # final or clang rebuild
 CXXFLAGS="$CFLAGS"
-export CFLAGS CXXFLAGS LDFLAGS
+export CFLAGS CXXFLAGS
 
 cmake -G Ninja -B build -S llvm -Wno-dev \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DLLVM_ENABLE_RUNTIMES='compiler-rt;libunwind;libcxx;libcxxabi' \
 	-DLLVM_ENABLE_PROJECTS='clang;lld' \
 	-DCLANG_VENDOR="$LLVM_new_vendor" -DLLD_VENDOR="$LLVM_new_vendor" \
-	-DCMAKE_C_FLAGS="$CFLAGS" -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
-	-DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS" $CT $CTG $CP $CRT $CLG $CLCPP \
-	$CLCPPA $CUW $CLLVM $COFF
-ninja -C build
+	$CT $CTG $CP $CRT $CLG $CLCPP $CLCPPA $CUW $CLLVM $COFF
+unset CT CTG CP CRT CLG CLCPP CLCPPA CUW CLLVM COFF
+ninja -C build -j2
 DESTDIR="${Destdir%/*}" cmake --install build --strip
 
 (
@@ -178,25 +179,24 @@ case "$stage" in
 		[ -e /cgnutools/bin/ld ] && mv /cgnutools/bin/ld{,-nouse}
 		[ -e /cgnutools/bin/gcc ] && mv /cgnutools/lib/gcc{,-nouse}
 		(
-			cd "$Destdir"
-			(
-				cd bin
-				ln clang-17 ${TARGET_TUPLE}-clang
-				ln clang-17 ${TARGET_TUPLE}-clang++
-			)
-			(
-				cd "lib/${TARGET_TUPLE}"
-				ln lib*.* ../
-			)
+			cd "$Destdir/bin"
+			ln clang-17 ${TARGET_TUPLE}-clang
+			ln clang-17 ${TARGET_TUPLE}-clang++
 		)
 		printf >"$Destdir/bin/${TARGET_TUPLE}.cfg" \
-		'-L/cgnutools/lib\n-L/cgnutools/lib/%s\n-nostdinc++\n' \
+			'-L/cgnutools/lib\n-L/cgnutools/lib/%s\n-nostdinc++\n' \
 			"$TARGET_TUPLE"
 		printf >>"$Destdir/bin/${TARGET_TUPLE}.cfg" \
-		'-I/cgnutools/include/c++/v1\n-I/cgnutools/include/%s/c++/v1\n-I/llvmtools/include\n' \
+			'-I/cgnutools/include/c++/v1\n-I/cgnutools/include/%s/c++/v1\n-I/llvmtools/include\n' \
 			"$TARGET_TUPLE"
 		# Amend /cgnutools' library path to /llvmtools'.
-		echo '/cgnutools/lib' >> "/llvmtools/etc/ld-musl-${MUSL_ARCH}.path"
+		(
+			cat "/llvmtools/etc/ld-musl-${MUSL_ARCH}.path"
+			echo '/cgnutools/lib'
+		) >"$trash/ld-musl-${MUSL_ARCH}.path"
+		mkdir -p "${Destdir%/*}/llvmtools/etc"
+		cat "$trash/ld-musl-${MUSL_ARCH}.path" \
+			>"${Destdir%/*}/llvmtools/etc/ld-musl-${MUSL_ARCH}.path"
 		;;
 	'second')
 		mkdir "$Destdir/usr"
