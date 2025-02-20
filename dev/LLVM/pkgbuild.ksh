@@ -30,128 +30,79 @@ if [[ $stage =~ (first|second) ]]; then
 	sed >"$trash/LLVM-test-linux-ld.c" 's@"\(/lib/ld-musl-.*\)"@"/llvmtools\1"@g' \
 		./clang/test/Driver/linux-ld.c
 	cat "$trash/LLVM-test-linux-ld.c" >./clang/test/Driver/linux-ld.c
-	# Built llvm-tblgen will need libstdc++.so.6 & libgcc_s.so.1.
-	# Set the rpath
-	CFLAGS='-O0 -g0 -pipe -fPIC -I/cgnutools/include'
-	# Set the compiler and linker flags...
-	case $stage in
-		'first')
-			CFLAGS+=' -Wl,-rpath=/cgnutools/lib'
-			;;
-	esac
-
-	# Set the compiler and linker flags...
-	case $stage in
-		'first')
-			CT="-DCMAKE_C_COMPILER=${TARGET_TUPLE}-gcc "
-			CT+="-DCMAKE_CXX_COMPILER=${TARGET_TUPLE}-g++ "
-			CT+="-DCMAKE_AR=/cgnutools/bin/${TARGET_TUPLE}-ar "
-			CT+="-DCMAKE_NM=/cgnutools/bin/${TARGET_TUPLE}-nm "
-			CT+="-DCMAKE_RANLIB=/cgnutools/bin/${TARGET_TUPLE}-ranlib "
-			CT+='-DCLANG_DEFAULT_LINKER=/cgnutools/bin/ld.lld '
-			CT+="-DGNU_LD_EXECUTABLE=/cgnutools/bin/${COPA_TARGET}-ld.bfd "
-			;;
-		'second')
-			CT="-DCMAKE_C_COMPILER=${TARGET_TUPLE}-clang "
-			CT+="-DCMAKE_CXX_COMPILER=${TARGET_TUPLE}-clang++ "
-			CT+='-DCMAKE_AR=/cgnutools/bin/llvm-ar '
-			CT+='-DCMAKE_NM=/cgnutools/bin/llvm-nm '
-			CT+='-DCMAKE_RANLIB=/cgnutools/bin/llvm-ranlib '
-			CT+='-DCLANG_DEFAULT_LINKER=/llvmtools/bin/ld.lld '
-			;;
-	esac
-
-	# Set the tuples & build target ...
+	
+	# Set the compiler and linker flags
+	CRT="-DCOMPILER_RT_BUILD_SANITIZERS=OFF "
+	CRT+="-DCOMPILER_RT_BUILD_XRAY=OFF "
+	CRT+="-DCOMPILER_RT_BUILD_LIBFUZZER=OFF "
+	CRT+="-DCOMPILER_RT_BUILD_PROFILE=OFF "
+	CRT+="-DCOMPILER_RT_BUILD_MEMPROF=OFF "
+	CRT+="-DCOMPILER_RT_BUILD_GWP_ASAN=OFF "
 	CTG="-DLLVM_DEFAULT_TARGET_TRIPLE=${TARGET_TUPLE} "
 	CTG+="-DLLVM_HOST_TRIPLE=${TARGET_TUPLE} "
 	CTG+="-DCOMPILER_RT_DEFAULT_TARGET_TRIPLE=${TARGET_TUPLE} "
-	CTG+='-DLLVM_TARGETS_TO_BUILD=host '
-	CTG+='-DLLVM_TARGET_ARCH=host '
-	CTG+='-DLLVM_TARGETS_TO_BUILD=Native;host '
+	CLG="-DCLANG_DEFAULT_CXX_STDLIB=libc++ "
+	CLG+="-DCLANG_DEFAULT_RTLIB=compiler-rt "
+	CLG+="-DCLANG_DEFAULT_UNWINDLIB=libunwind "
+	CLG+="-DCLANG_DEFAULT_CXX_STDLIB=libc++ "
+	CLCPP="-DLIBCXX_HAS_MUSL_LIBC=ON "
+	CLCPP+="-DLIBCXX_ENABLE_LOCALIZATION=ON "
+	CLCPP+="-DLIBCXX_ENABLE_NEW_DELETE_DEFINITIONS=ON "
+	CLCPP+="-DLIBCXX_CXX_ABI=libcxxabi "
+	CLCPP+="-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON "
+	CLCPP+="-DLIBCXX_ENABLE_ASSERTIONS=ON "
+	CLCPPA="-DLIBCXXABI_USE_LLVM_UNWINDER=ON "
+	CLCPPA+="-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON "
+	CUW="-DLIBUNWIND_INSTALL_HEADERS=ON "
+	CLLVM="-DLLVM_ENABLE_EH=ON -DLLVM_ENABLE_RTTI=ON "
+	CLLVM+="-DLLVM_ENABLE_ZLIB=ON "
+	CLLVM+="-DLLVM_INSTALL_UTILS=ON "
+	CLLVM+="-DLLVM_BUILD_LLVM_DYLIB=ON "
+	CLLVM+="-DLLVM_LINK_LLVM_DYLIB=ON "
+	CLLVM+="-DENABLE_LINKER_BUILD_ID=ON "
+	CLLVM+="-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON "
+	COFF="-DLLVM_ENABLE_ZSTD=OFF -DLLVM_ENABLE_LIBEDIT=OFF "
+	COFF+="-DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_LIBEDIT=OFF "
+	COFF+="-DLLVM_ENABLE_TERMINFO=OFF -DLLVM_ENABLE_LIBPFM=OFF "
+	if [[ $stage == 'first' ]]; then
+		CFLAGS='-fPIC -I/cgnutools/include -Wl,-rpath=/cgnutools/lib '
+		CT="-DCMAKE_C_COMPILER=${TARGET_TUPLE}-gcc "
+		CT+="-DCMAKE_CXX_COMPILER=${TARGET_TUPLE}-g++ "
+		CT+="-DCMAKE_AR=/cgnutools/bin/${TARGET_TUPLE}-ar "
+		CT+="-DCMAKE_NM=/cgnutools/bin/${TARGET_TUPLE}-nm "
+		CT+="-DCMAKE_RANLIB=/cgnutools/bin/${TARGET_TUPLE}-ranlib "
+		CT+="-DCLANG_DEFAULT_LINKER=/cgnutools/bin/ld.lld "
+		CT+="-DGNU_LD_EXECUTABLE=/cgnutools/bin/${COPA_TARGET}-ld.bfd "
+		CTG+="-DLLVM_TARGETS_TO_BUILD=host "
+		CP="-DCMAKE_INSTALL_PREFIX=/cgnutools "
+		CRT+="-DCOMPILER_RT_USE_LLVM_UNWINDER=ON "
+		CRT+="-DCOMPILER_RT_USE_BUILTINS_LIBRARY=OFF "
+		CLCPP+="-DLIBCXX_USE_COMPILER_RT=OFF "
+		CLCPPA+="-DLIBCXXABI_USE_COMPILER_RT=OFF "
+	elif [[ $stage == 'second' ]]; then
+		CFLAGS="-fPIC -I/cgnutools/include"
+		CT="-DCMAKE_C_COMPILER=${TARGET_TUPLE}-clang "
+		CT+="-DCMAKE_CXX_COMPILER=${TARGET_TUPLE}-clang++ "
+		CT+="-DCMAKE_AR=/cgnutools/bin/llvm-ar "
+		CT+="-DCMAKE_NM=/cgnutools/bin/llvm-nm "
+		CT+="-DCMAKE_RANLIB=/cgnutools/bin/llvm-ranlib "
+		CT+="-DCLANG_DEFAULT_LINKER=/llvmtools/bin/ld.lld "
+		CP="-DCMAKE_INSTALL_PREFIX=/llvmtools "
+		CRT+="-DCOMPILER_RT_USE_BUILTINS_LIBRARY=ON "
+		CRT+="-DCOMPILER_RT_CXX_LIBRARY=libcxx "
+		CRT+="-DCOMPILER_RT_USE_LLVM_UNWINDER=ON "
+		CLCPPA+="-DLIBCXXABI_USE_COMPILER_RT=ON "
+		CUW+="-DLIBUNWIND_USE_COMPILER_RT=ON "
+		CLLVM+="-DLLVM_ENABLE_LIBCXX=ON "
+		CLLVM+="-DLLVM_ENABLE_LLD=ON "
+		CLLVM+="-DZLIB_INCLUDE_DIR=/llvmtools/include "
+		CLLVM+="-DZLIB_LIBRARY_RELEASE=/llvmtools/lib/libz.so "
+		COFF+="-DLLVM_INCLUDE_BENCHMARKS=OFF "
+	fi
+	CTG+="-DLLVM_TARGET_ARCH=host "
+	CTG+="-DLLVM_TARGETS_TO_BUILD=Native;host "
+	CP+="-DDEFAULT_SYSROOT=/llvmtools "
 
-	# Set the paths ...
-	case $stage in
-		'first') CP='-DCMAKE_INSTALL_PREFIX=/cgnutools ' ;;
-		'second') CP='-DCMAKE_INSTALL_PREFIX=/llvmtools ' ;;
-	esac
-	CP+='-DDEFAULT_SYSROOT=/llvmtools '
-
-	# Set options for compiler-rt
-	# + avoid all the optional runtimes:
-	CRT='-DCOMPILER_RT_BUILD_SANITIZERS=OFF '
-	CRT+='-DCOMPILER_RT_BUILD_XRAY=OFF '
-	CRT+='-DCOMPILER_RT_BUILD_LIBFUZZER=OFF '
-	CRT+='-DCOMPILER_RT_BUILD_PROFILE=OFF '
-	CRT+='-DCOMPILER_RT_BUILD_MEMPROF=OFF '
-	# + Avoid need for libexecinfo:
-	CRT+='-DCOMPILER_RT_BUILD_GWP_ASAN=OFF '
-	CRT+='-DCOMPILER_RT_USE_LLVM_UNWINDER=ON '
-	case $stage in
-		'first') CRT+='-DCOMPILER_RT_USE_BUILTINS_LIBRARY=OFF ' ;;
-		'second')
-			CRT+='-DCOMPILER_RT_USE_BUILTINS_LIBRARY=ON '
-			CRT+='-DCOMPILER_RT_CXX_LIBRARY=libcxx '
-			;;
-	esac
-
-	# Set options for clang
-	# + Set the standard C++ library that
-	# clang will use to LLVM's libc++
-	# + Set compiler-rt as default runtime
-	CLG='-DCLANG_DEFAULT_CXX_STDLIB=libc++ '
-	CLG+='-DCLANG_DEFAULT_RTLIB=compiler-rt '
-	CLG+='-DCLANG_DEFAULT_UNWINDLIB=libunwind '
-	CLG+='-DCLANG_DEFAULT_CXX_STDLIB=libc++ '
-
-	# Set options for libc++
-	CLCPP='-DLIBCXX_HAS_MUSL_LIBC=ON '
-	CLCPP+='-DLIBCXX_ENABLE_LOCALIZATION=ON '
-	CLCPP+='-DLIBCXX_ENABLE_NEW_DELETE_DEFINITIONS=ON '
-	CLCPP+='-DLIBCXX_CXX_ABI=libcxxabi '
-	case $stage in
-		'first') CLCPP+='-DLIBCXX_USE_COMPILER_RT=OFF ' ;;
-		'second') CLCPP+='-DLIBCXX_USE_COMPILER_RT=ON ' ;;
-	esac
-	CLCPP+='-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON '
-	CLCPP+='-DLIBCXX_ENABLE_ASSERTIONS=ON '
-
-	# Set options fo libc++abi
-	CLCPPA='-DLIBCXXABI_USE_LLVM_UNWINDER=ON '
-	CLCPPA+='-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON '
-	case $stage in
-		'first') CLCPPA+='-DLIBCXXABI_USE_COMPILER_RT=OFF ' ;;
-		'second') CLCPPA+='-DLIBCXXABI_USE_COMPILER_RT=ON ' ;;
-	esac
-
-	# Set options for libunwind
-	CUW='-DLIBUNWIND_INSTALL_HEADERS=ON '
-	case $stage in
-		'second') CUW+='-DLIBUNWIND_USE_COMPILER_RT=ON ' ;;
-	esac
-
-	# Set LLVM options
-	# + Enable Exception handling and Runtime Type Info
-	CLLVM='-DLLVM_ENABLE_EH=ON -DLLVM_ENABLE_RTTI=ON '
-	CLLVM+='-DLLVM_ENABLE_ZLIB=ON '
-	CLLVM+='-DLLVM_INSTALL_UTILS=ON '
-	CLLVM+='-DLLVM_BUILD_LLVM_DYLIB=ON '
-	CLLVM+='-DLLVM_LINK_LLVM_DYLIB=ON '
-	CLLVM+='-DENABLE_LINKER_BUILD_ID=ON '
-	CLLVM+='-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON '
-	case $stage in
-		'second')
-			CLLVM+='-DLLVM_ENABLE_LIBCXX=ON '
-			CLLVM+='-DLLVM_ENABLE_LLD=ON '
-			CLLVM+='-DZLIB_INCLUDE_DIR=/llvmtools/include '
-			CLLVM+='-DZLIB_LIBRARY_RELEASE=/llvmtools/lib/libz.so '
-			;;
-	esac
-
-	# Turn off LLVM options
-	# + Turn off features host may have
-	COFF='-DLLVM_ENABLE_ZSTD=OFF -DLLVM_ENABLE_LIBEDIT=OFF '
-	COFF+='-DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_LIBEDIT=OFF '
-	COFF+='-DLLVM_ENABLE_TERMINFO=OFF -DLLVM_ENABLE_LIBPFM=OFF '
 fi # final or clang rebuild
 CXXFLAGS="$CFLAGS"
 export CFLAGS CXXFLAGS
