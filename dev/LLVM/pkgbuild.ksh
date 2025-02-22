@@ -30,7 +30,7 @@ if [[ $stage =~ (first|second) ]]; then
 	sed >"$trash/LLVM-test-linux-ld.c" 's@"\(/lib/ld-musl-.*\)"@"/llvmtools\1"@g' \
 		./clang/test/Driver/linux-ld.c
 	cat "$trash/LLVM-test-linux-ld.c" >./clang/test/Driver/linux-ld.c
-	
+
 	# Set the compiler and linker flags
 	CRT="-DCOMPILER_RT_BUILD_SANITIZERS=OFF "
 	CRT+="-DCOMPILER_RT_BUILD_XRAY=OFF "
@@ -113,8 +113,9 @@ cmake -G Ninja -B build -S llvm -Wno-dev \
 	-DLLVM_ENABLE_PROJECTS='clang;lld' \
 	-DCLANG_VENDOR="$LLVM_new_vendor" -DLLD_VENDOR="$LLVM_new_vendor" \
 	$CT $CTG $CP $CRT $CLG $CLCPP $CLCPPA $CUW $CLLVM $COFF
+
 unset CT CTG CP CRT CLG CLCPP CLCPPA CUW CLLVM COFF
-ninja -C build -j2
+ninja -C build -j5
 DESTDIR="${Destdir%/*}" cmake --install build --strip
 
 (
@@ -128,7 +129,9 @@ DESTDIR="${Destdir%/*}" cmake --install build --strip
 case "$stage" in
 	'first')
 		[ -e /cgnutools/bin/ld ] && mv /cgnutools/bin/ld{,-nouse}
-		[ -e /cgnutools/bin/gcc ] && mv /cgnutools/lib/gcc{,-nouse}
+		# Change the location for the G.C.C. instalation libraries, ergo
+		# LLVM will not search for crt[i,1,n].o files there.
+		mv /cgnutools/lib/gcc{,-nouse}
 		(
 			cd "$Destdir/bin"
 			ln clang-17 ${TARGET_TUPLE}-clang
@@ -143,6 +146,7 @@ case "$stage" in
 		# Amend /cgnutools' library path to /llvmtools'.
 		(
 			cat "/llvmtools/etc/ld-musl-${MUSL_ARCH}.path"
+			printf '/cgnutools/lib/%s\n' "$TARGET_TUPLE"
 			echo '/cgnutools/lib'
 		) >"$trash/ld-musl-${MUSL_ARCH}.path"
 		mkdir -p "${Destdir%/*}/llvmtools/etc"
