@@ -22,6 +22,9 @@ cd "$OBJDIR/llvm-project-${Version}.src"
 
 [ -d build ] && rm -rf ./build
 if [[ $stage =~ (first|second) ]]; then
+	# Save the original CFLAGS.
+	CFLAGSO="$CFLAGS"
+
 	# Hack clang(1) from the source to use the dynamic loader
 	# from /llvmtools; also apply changes to the tests.
 	sed >"$trash/LLVM-Linux.cpp" 's@"\(/lib/ld-musl-\)"@"/llvmtools\1"@g' \
@@ -161,3 +164,9 @@ case "$stage" in
 		)
 		;;
 esac
+
+# Restore the CFLAGS defined per the build system.
+unset CFLAGS CXXFLAGS
+CFLAGS="$CFLAGSO"
+CXXFLAGS="$CFLAGS"
+export CFLAGS CXXFLAGS
