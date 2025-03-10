@@ -8,6 +8,9 @@ esac
 c -cd "ksh-$Version.tar.gz" | tar -xf - -C "$OBJDIR"
 cd "$OBJDIR/ksh-$Version"
 
+# Clean the source code tree.
+[ -d ./arch/ ] && ./bin/package clean
+
 if $xtools; then
 	CC=${TARGET_TUPLE}-clang
 	CXX=${TARGET_TUPLE}-clang++
