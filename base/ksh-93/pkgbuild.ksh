@@ -8,7 +8,7 @@ esac
 c -cd "ksh-$Version.tar.gz" | tar -xf - -C "$OBJDIR"
 cd "$OBJDIR/ksh-$Version"
 
-if xtools; then
+if $xtools; then
 	CC=${TARGET_TUPLE}-clang
 	CXX=${TARGET_TUPLE}-clang++
 	AR=llvm-ar
@@ -19,7 +19,7 @@ export CC CXX AR RANLIB
 ./bin/package make
 mkdir -p "$Destdir/bin"
 install -m755 "arch/$(bin/package host type)/bin/ksh" "$Destdir/bin"
-if ! xtools; then
+if ! $xtools; then
 	./bin/package install "$Destdir"
 	(
 		cd "$Destdir"
