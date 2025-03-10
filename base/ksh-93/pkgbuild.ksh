@@ -22,16 +22,18 @@ install -m755 "arch/$(bin/package host type)/bin/ksh" "$Destdir/bin"
 if ! xtools; then
 	./bin/package install "$Destdir"
 	(
-	cd "$Destdir"
-	# Place include and share inside /usr again.
-	mkdir ./usr
-	mv ./share ./include ./usr
-	(cd ./usr
-	mkdir -p ./share/lib
-	(
-	# Move ksh93's 'fun' snippets to /usr/share/lib.
-	cd ./share
-	mv ./fun ./lib
+		cd "$Destdir"
+		# Place include and share inside /usr again.
+		mkdir ./usr
+		mv ./share ./include ./usr
+		(
+			cd ./usr
+			mkdir -p ./share/lib
+			(
+				# Move ksh93's 'fun' snippets to /usr/share/lib.
+				cd ./share
+				mv ./fun ./lib
+			)
+		)
 	)
-)
 fi
