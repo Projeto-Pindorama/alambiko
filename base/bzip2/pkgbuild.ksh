@@ -75,6 +75,17 @@ gmake -j$(nproc) \
 	gmake install PREFIX="$PREFIX" ROOT="$ROOT"
 
 if ! $xtools; then
+	# Place bzip2 executables at the root /bin
+	# instead of the user-space one.
+	mkdir "$Destdir/bin"
+	rm "$Destdir/usr/bin/"bz{cmp,egrep,fgrep,less}
+	mv "$Destdir/usr/bin/"{b{unzip2,z{cat,diff,grep,more}},bzip2{,recover}} "$Destdir/bin/"
+	(
+		cd "$Destdir/bin"
+		apply 'ln bzgrep %1' bz{e,f}grep
+		apply -2 ln bz{diff,cmp,more,less} 
+	)
+	# Install the dynamic libbz2.
 	mkdir "$Destdir/lib"
 	cp libbz2.?.?.? "$Destdir/lib"
 	(
