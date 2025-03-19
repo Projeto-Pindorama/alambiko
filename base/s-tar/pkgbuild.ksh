@@ -1,0 +1,56 @@
+# vim: set filetype=sh :
+xtools=true
+case "x${Destdir##*/}" in
+	'x') xtools=false ;;
+	*) break ;;
+esac
+
+c -cd "star-$Version.tar.bz2" | tar -xf - -C "$OBJDIR"
+cd "$OBJDIR/star-$Version"
+
+# Clean the source code tree.
+gmake clean
+
+if $xtools; then
+	DESTDIR="${Destdir##*/}"
+	INS_BASE=/llvmtools
+	CC=${TARGET_TUPLE}-clang
+else
+	DESTDIR="$Destdir"
+	INS_BASE=/usr
+	CC=cc
+fi
+
+gmake -j$(nproc) \
+	CC=$CC \
+	INS_BASE="$INS_BASE" \	 &&
+	gmake DESTDIR="$Destdir" \
+		INS_BASE="$INS_BASE" \
+		INSUSR=root \
+		INSGRP=wheel \
+		install
+
+if ! $xtools; then
+	mkdir -p "$Destdir"/{s,}bin
+	(
+		cd "$Destdir"
+		mv ./usr/bin/s{mt,tar{_sym,}} ./bin &&
+			mv ./usr/sbin/rmt ./sbin &&
+			for link in {s{pax,cpio},{gnu,sun,,us}tar}; do
+				if [ -L "./usr/bin/$link" ] &&
+					rm -f "./usr/bin/$link"; then
+					(
+						cd ./bin
+						ln star "$link"
+					)
+				fi
+			done &&
+			if [ -L ./usr/bin/mt ] &&
+				rm -f ./usr/bin/mt; then
+				(
+					cd ./bin
+					ln smt mt
+				)
+			fi
+	)
+fi
