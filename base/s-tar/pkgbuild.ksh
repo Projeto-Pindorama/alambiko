@@ -52,5 +52,6 @@ if ! $xtools; then
 					ln smt mt
 				)
 			fi
+		cd ./usr/share/man/man1 && ln {s,}tar.1
 	)
 fi
