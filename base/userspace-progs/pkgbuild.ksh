@@ -1,5 +1,3 @@
-# vim: set filetype=sh :
-
 case "x${Destdir##*/}" in
 	'x') stage='final' ;;
 	'xllvmtools') stage='second' ;;
@@ -42,7 +40,7 @@ case "$stage" in
 			DEFBIN=/usr/bin SV3BIN=/usr/5bin S42BIN=/usr/5bin/s42 \
 			SUSBIN=/usr/5bin/posix SU3BIN=/usr/5bin/posix2001 UCBBIN=/usr/ucb \
 			CCSBIN=/usr/ccs/bin \
-			DEFLIB=/lib/5lib DEFSBIN=/sbin MANDIR=/usr/share/man
+			DEFSBIN=/sbin DEFLIB=/usr/lib/5lib MANDIR=/usr/share/man
 		;;
 esac
 
@@ -75,6 +73,7 @@ copy,dd,dirname,df{,space},false,hostname,install,listusers,logname,mk{fifo,nod}
 pathchk,pkill,pwd,rm,settime,sleep,stty,sync,tape{,cntl},tcopy,true,tty,uname,uptime,users,\
 w,whoami,whodo} &&
 				mv usr/bin/logins usr/sbin &&
+				# Remake links to /usr/5bin and /usr/ucb.
 				apply 'cd "`dirname "%1"`"; p="`basename "%1"`"; ln -sf "../../bin/$p" "$p"' \
 					usr/5bin/basename usr/5bin/bfs usr/5bin/chmod usr/5bin/cp \
 				       	usr/5bin/date usr/5bin/du usr/5bin/echo usr/5bin/ed \
