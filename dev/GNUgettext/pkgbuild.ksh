@@ -21,7 +21,7 @@ if ! $xtools; then
 		"--prefix=/usr/ccs"
 		"--enable-static"
 		"--enable-shared"
-		"--docdir=/usr/share/doc/$(basename $(pwd))"
+		"--docdir=/usr/share/doc/gnu/$(basename $(pwd))"
 	)
 	export LDFLAGS
 else
