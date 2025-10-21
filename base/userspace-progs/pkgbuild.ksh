@@ -4,7 +4,7 @@ case "x${Destdir##*/}" in
 esac
 
 mkdir -p "$OBJDIR/copausrspc"
-c -cd "dev/${HeirloomNG_Version}.tar.gz" | tar -xf - -C "$OBJDIR/copausrspc"
+c -cd "heirloom-$Version.tar.bz2" | tar -xf - -C "$OBJDIR/copausrspc"
 cd "$OBJDIR/copausrspc/"
 
 # Disable both Heirloom tar and man, since these are provided
