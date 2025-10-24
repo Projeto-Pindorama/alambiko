@@ -12,6 +12,12 @@ cd "$OBJDIR/flex-${Version}"
 
 case "$stage" in
 	second) (
+		CC=clang CXX=clang++ \
+		AR=llvm-ar \
+		AS=llvm-as \
+		RANLIB=llvm-ranlib \
+		LD=ld.lld \
+		STRIP=llvm-strip \
 		./configure --prefix='/' \
 			--build=$TARGET_TUPLE \
 			--host=$TARGET_TUPLE
