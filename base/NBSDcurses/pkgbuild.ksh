@@ -43,14 +43,6 @@ export CC CXX AR RANLIB PREFIX
 gmake -j$(nproc) &&
 	CFLAGS="$C_FLAGS" DESTDIR="$Destdir" gmake install
 case "$stage" in
-	second)
-		(
-			cd "$Destdir/lib"
-			# Just in case of the links not existing.
-			ln -sf libncurses.so libcurses.so
-			ln -sf libncursesw.a libncurses.a
-		)
-		;;
 	final)
 		# Place the dynamic libraries on the root of the filesystem.
 		mv "$Destdir/usr/lib/"lib{curses,form,menu,panel,terminfo}.so "$Destdir/lib" &&
