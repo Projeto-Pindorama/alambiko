@@ -5,21 +5,29 @@ case "x${Destdir##*/}" in
 	*) break ;;
 esac
 
-c -cd "ksh-$Version.tar.gz" | tar -xf - -C "$OBJDIR"
+c -cd "v$Version.tar.gz" | tar -xf - -C "$OBJDIR"
 cd "$OBJDIR/ksh-$Version"
 
 # Clean the source code tree.
 [ -d ./arch/ ] && ./bin/package clean
 
 if $xtools; then
-	CC=${TARGET_TUPLE}-clang
-	CXX=${TARGET_TUPLE}-clang++
+	CC=clang
+	CXX=clang++
 	AR=llvm-ar
 	RANLIB=llvm-ranlib
+	# Hack the main control script (bin/package) from
+	# ksh93's build system so it forcefully uses
+	# /llvmtools/bin; /opt/ast/bin won't be necessary
+	# too soon.
+	sed >"$trash/ksh93-package.sh" \
+		's@\(^PATH=$(sanitize_PATH "\)/opt/ast\(.*\)@\1/llvmtools\2@g' \
+		./bin/package
+	cat "$trash/ksh93-package.sh" > ./bin/package
 fi
 export CC CXX AR RANLIB
 
-./bin/package make
+sh ./bin/package make
 mkdir -p "$Destdir/bin"
 install -m755 "arch/$(bin/package host type)/bin/ksh" "$Destdir/bin"
 if ! $xtools; then
