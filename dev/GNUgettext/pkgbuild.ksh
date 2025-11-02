@@ -15,6 +15,15 @@ sed >"$trash/GNUgettext.locating-rule.c" '/xalloc\.h/a\
 	cat "$trash/GNUgettext.locating-rule.c" \
 		>./gettext-tools/src/locating-rule.c
 
+# Patch obstack.c for clang so we won't have "error:
+# incompatible function pointer types".
+# Check https://github.com/conan-io/conan-center-index/issues/23029,
+# which cites this bug on MacOS with clang.
+sed >"$trash/GNUgettext.gnulib-lib.obstack.c" \
+	'/\*obstack_alloc_failed_handler/{n;s/\(.*=\) \(.*\);/\1 __attribute_noreturn__(\2);/;}' \
+	./gettext-tools/gnulib-lib/obstack.c &&
+	cat "$trash/GNUgettext.gnulib-lib.obstack.c" >./gettext-tools/gnulib-lib/obstack.c
+
 [ -e Makefile ] && gmake clean
 if ! $xtools; then
 	configure_opts=(
@@ -34,6 +43,11 @@ else
 		"--disable-acl"
 		"--disable-java"
 	)
+	CC=clang
+	CXX=clang++
+	RANLIB=llvm-ranlib
+	AR=llvm-ar
+	export CC CXX RANLIB AR
 fi
 
 ./configure ${configure_opts[@]}
