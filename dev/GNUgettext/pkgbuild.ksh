@@ -19,10 +19,12 @@ sed >"$trash/GNUgettext.locating-rule.c" '/xalloc\.h/a\
 # incompatible function pointer types".
 # Check https://github.com/conan-io/conan-center-index/issues/23029,
 # which cites this bug on MacOS with clang.
-sed >"$trash/GNUgettext.gnulib-lib.obstack.c" \
-	'/\*obstack_alloc_failed_handler/{n;s/\(.*=\) \(.*\);/\1 __attribute_noreturn__(\2);/;}' \
-	./gettext-tools/gnulib-lib/obstack.c &&
-	cat "$trash/GNUgettext.gnulib-lib.obstack.c" >./gettext-tools/gnulib-lib/obstack.c
+for gnulib in 'gettext-tools/gnulib-lib' 'gettext-tools/libgettextpo' 'libtextstyle/lib'; do
+	sed >"$trash/GNUgettext.${gnulib##*/}.obstack.c" \
+		'/\*obstack_alloc_failed_handler/{n;s/\(.*=\) \(.*\);/\1 __attribute_noreturn__(\2);/;}' \
+		"./$gnulib/obstack.c" &&
+	cat "$trash/GNUgettext.${gnulib##*/}.obstack.c" >"./$gnulib/obstack.c"
+done
 
 [ -e Makefile ] && gmake clean
 if ! $xtools; then
