@@ -49,7 +49,8 @@ else
 	CXX=clang++
 	RANLIB=llvm-ranlib
 	AR=llvm-ar
-	export CC CXX RANLIB AR
+	CFLAGS+='-D__attribute_noreturn__=""'
+	export CC CXX RANLIB AR CFLAGS
 fi
 
 ./configure ${configure_opts[@]}
