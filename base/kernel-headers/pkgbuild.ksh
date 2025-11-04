@@ -1,5 +1,4 @@
 # vim: set filetype=sh :
-
 # Location to where it will be installed.
 # In case of not being for the cross toolchain,
 # it will be thrown into the usr/ directory.
