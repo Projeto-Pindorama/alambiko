@@ -12,13 +12,13 @@ cd "$OBJDIR/copausrspc/"
 # Also, Heirloom tar is broken (see issue #44 at the
 # heirloom-ng GitHub repository).
 sed >"$trash/HeirloomNG.makefile" \
-	"$(echo 's/'{man,tar}'//;')" ./makefile
-cp "$trash/HeirloomNG.makefile" ./makefile
+	"$(echo 's/'{man,tar}'//;')" ./heirloom-ng-$Version/makefile
+cp "$trash/HeirloomNG.makefile" ./heirloom-ng-$Version/makefile
 
 case "$stage" in
 	second)
 		_CFLAGS="-O0 -fomit-frame-pointer"
-		gmake -C "./heirloom-ng-${HeirloomNG_Version}" \
+		gmake -C "./heirloom-ng-$Version" \
 			CFLAGS="$_CFLAGS" \
 			CFLAGSS="$_CFLAGS" \
 			CFLAGS2="$_CFLAGS" \
@@ -32,7 +32,7 @@ case "$stage" in
 		unset _CFLAGS
 		;;
 	final)
-		gmake -C "./heirloom-ng-${HeirloomNG_Version}" \
+		gmake -C "./heirloom-ng-$Version" \
 			CFLAGS="$CFLAGS -fomit-frame-pointer -O" \
 			CFLAGSS="$CFLAGS -fomit-frame-pointer -Os" \
 			CFLAGS2="$CFLAGS -O2" \
@@ -44,8 +44,8 @@ case "$stage" in
 		;;
 esac
 
-gmake -C "./heirloom-ng-${HeirloomNG_Version}" \
-	ROOT="$Destdir" instal
+gmake -C "./heirloom-ng-$Version" \
+	ROOT="$Destdir" install
 
 # Yet to be tested.
 case "$stage" in
