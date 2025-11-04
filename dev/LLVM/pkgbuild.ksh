@@ -156,13 +156,6 @@ case "$stage" in
 		cat "$trash/ld-musl-${MUSL_ARCH}.path" \
 			>"${Destdir%/*}/llvmtools/etc/ld-musl-${MUSL_ARCH}.path"
 		;;
-	'second')
-		mkdir "$Destdir/usr"
-		(
-			cd "$Destdir/usr"
-			ln -s ../include .
-		)
-		;;
 esac
 
 # Restore the CFLAGS defined per the build system.
