@@ -14,7 +14,7 @@ gmake clean
 if $xtools; then
 	DESTDIR="${Destdir##*/}"
 	INS_BASE=/llvmtools
-	CC=${TARGET_TUPLE}-clang
+	CC=clang
 else
 	DESTDIR="$Destdir"
 	INS_BASE=/usr

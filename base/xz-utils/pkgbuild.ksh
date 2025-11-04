@@ -12,6 +12,11 @@ case "x${Destdir##*/}" in
 		# Disable compiler optimizations
 		# for the toolchain.
 		C_FLAGS='-O0'
+		CC=clang
+		CXX=clang++
+		AR=llvm-ar
+		RANLIB=llvm-ranlib
+		export CC CXX AR RANLIB
 		;;
 esac
 
@@ -22,20 +27,21 @@ configure_opts=(
 	"--prefix=/$PREFIX"
 	"--bindir=/bin"
 	"--libdir=/$PREFIX/lib"
-	"--sharedlibdir=/lib"
 	"--enable-year2038"
 )
 
 if ! $xtools; then
-	set -A configure_opts "${configure_opts[@]}" \
+	configure_opts+=(
 		"--docdir="/usr/share/doc/$(basename $(pwd))"" \
 		"--disable-nls" \
 		"--disable-rpath"
+	)
 
 else
-	set -A configure_opts "${configure_opts[@]}" \
+	configure_opts+=(
 		"--target=$COPA_TARGET" \
 		"--build=$COPA_HOST"
+	)
 fi
 
 ./configure ${configure_opts[@]}

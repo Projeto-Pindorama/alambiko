@@ -52,7 +52,7 @@ gmake clean
 if $xtools; then
 	PREFIX=/
 	AR=llvm-ar
-	CC=${TARGET_TUPLE}-clang
+	CC=clang
 	RANLIB=llvm-ranlib
 else
 	PREFIX=/usr

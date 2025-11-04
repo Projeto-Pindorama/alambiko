@@ -21,7 +21,7 @@ fi
 gmake clean
 
 if $xtools; then
-	CC=${TARGET_TUPLE}-clang
+	CC=clang
 else
 	LDFLAGS='-static'
 fi
