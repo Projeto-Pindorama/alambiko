@@ -15,6 +15,16 @@ sed >"$trash/HeirloomNG.makefile" \
 	"$(echo 's/'{man,tar}'//;')" ./heirloom-ng-$Version/makefile
 cp "$trash/HeirloomNG.makefile" ./heirloom-ng-$Version/makefile
 
+# I absolutely hate this type of hack, but it is needed here since
+# time.h doesn't contain the functions from sys/time.h.
+# I actually forgot why did it compile before on Copacabana 0.4;
+# maybe musl libc folks have changed this?
+sed >"$trash/HeirloomNG.date.c" \
+	'/^#include.*time.h/a\
+#include      <sys/time.h>
+' ./heirloom-ng-$Version/date/date.c
+cp "$trash/HeirloomNG.date.c" ./heirloom-ng-$Version/date/date.c
+
 case "$stage" in
 	second)
 		_CFLAGS="-O0 -fomit-frame-pointer"
@@ -23,6 +33,7 @@ case "$stage" in
 			CFLAGSS="$_CFLAGS" \
 			CFLAGS2="$_CFLAGS" \
 			CFLAGSU="$_CFLAGS" \
+			LCURS='-ltermcap -DUSE_TERMCAP'	\
 			DEFBIN=/bin SV3BIN=/bin S42BIN=/bin/s42 \
 			SUSBIN=/bin/posix SU3BIN=/bin/posix2001 UCBBIN=/bin \
 			CCSBIN=/bin \
