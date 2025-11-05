@@ -25,6 +25,24 @@ sed >"$trash/HeirloomNG.date.c" \
 ' ./heirloom-ng-$Version/date/date.c
 cp "$trash/HeirloomNG.date.c" ./heirloom-ng-$Version/date/date.c
 
+# This is Hell. And I'm about to kill some demons.
+# For some reason, gmake doesn't receive the
+# variables from the env like it would happen on
+# classic UNIX make, so we must use the '?='
+# extension.
+sed >"$trash/HeirloomNG.build-mk.config" \
+	"$(echo '/^'{CFLAGS,\
+LDFLAGS,\
+LIBPATH,\
+LCURS,\
+{DEF{,S},SV3,S42,SUS,SU3,UCB,CCS}BIN,\
+{MAN,DFL}DIR,\
+DEFLIB,\
+SPELLHIST,\
+SULOG}'[^?]/s/\(.*\)=\(.*\)/\1?=\2/;')" \
+	./heirloom-ng-$Version/build/mk.config
+cp "$trash/HeirloomNG.build-mk.config" ./heirloom-ng-$Version/build/mk.config
+
 # Clean source tree.
 [ -e ./heirloom-ng-$Version/Makefile ] \
 	&& gmake -C "./heirloom-ng-$Version" mrproper
@@ -32,31 +50,32 @@ cp "$trash/HeirloomNG.date.c" ./heirloom-ng-$Version/date/date.c
 case "$stage" in
 	second)
 		_CFLAGS="-O0 -fomit-frame-pointer"
-		gmake -C "./heirloom-ng-$Version" \
-			CFLAGS="$_CFLAGS" \
+		CFLAGS="$_CFLAGS" \
 			CFLAGSS="$_CFLAGS" \
 			CFLAGS2="$_CFLAGS" \
 			CFLAGSU="$_CFLAGS" \
+			LDFLAGS='$(LIBPATH)' \
+			LIBPATH='-L/llvmtools/lib' \
 			LCURS='-ltermcap -DUSE_TERMCAP'	\
 			DEFBIN=/bin SV3BIN=/bin S42BIN=/bin/s42 \
 			SUSBIN=/bin/posix SU3BIN=/bin/posix2001 UCBBIN=/bin \
 			CCSBIN=/bin \
 			DEFLIB=/lib DEFSBIN=/sbin MANDIR=/tmp/__man__ \
 			DFLDIR=/dev/null SPELLHIST=/dev/null \
-			SULOG=/dev/null
+			SULOG=/dev/null \
+			gmake -C "./heirloom-ng-$Version"
 		unset _CFLAGS
 		;;
 	final)
-		gmake -C "./heirloom-ng-$Version" \
-			CFLAGS="$CFLAGS -fomit-frame-pointer -O" \
+		CFLAGS="$CFLAGS -fomit-frame-pointer -O" \
 			CFLAGSS="$CFLAGS -fomit-frame-pointer -Os" \
 			CFLAGS2="$CFLAGS -O2" \
 			CFLAGSU="$CFLAGS -fomit-frame-pointer -funroll-loops -O2" \
 			DEFBIN=/usr/bin SV3BIN=/usr/5bin S42BIN=/usr/5bin/s42 \
 			SUSBIN=/usr/5bin/posix SU3BIN=/usr/5bin/posix2001 UCBBIN=/usr/ucb \
 			CCSBIN=/usr/ccs/bin \
-			DEFSBIN=/sbin DEFLIB=/usr/lib/5lib MANDIR=/usr/share/man
-		;;
+			DEFSBIN=/sbin DEFLIB=/usr/lib/5lib MANDIR=/usr/share/man \
+			gmake -C "./heirloom-ng-$Version";;
 esac
 
 gmake -C "./heirloom-ng-$Version" \
