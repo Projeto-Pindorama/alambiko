@@ -25,6 +25,10 @@ sed >"$trash/HeirloomNG.date.c" \
 ' ./heirloom-ng-$Version/date/date.c
 cp "$trash/HeirloomNG.date.c" ./heirloom-ng-$Version/date/date.c
 
+# Clean source tree.
+[ -e ./heirloom-ng-$Version/Makefile ] \
+	&& gmake -C "./heirloom-ng-$Version" mrproper
+
 case "$stage" in
 	second)
 		_CFLAGS="-O0 -fomit-frame-pointer"
