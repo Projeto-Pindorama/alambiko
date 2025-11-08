@@ -25,73 +25,85 @@ sed >"$trash/HeirloomNG.date.c" \
 ' ./heirloom-ng-$Version/date/date.c
 cp "$trash/HeirloomNG.date.c" ./heirloom-ng-$Version/date/date.c
 
-# This is Hell. And I'm about to kill some demons.
-# For some reason, gmake doesn't receive the
-# variables from the env like it would happen on
-# classic UNIX make, so we must use the '?='
-# extension.
-sed >"$trash/HeirloomNG.build-mk.config" \
-	"$(echo '/^'{CFLAGS,\
-LDFLAGS,\
-LIBPATH,\
-LCURS,\
-{DEF{,S},SV3,S42,SUS,SU3,UCB,CCS}BIN,\
-{MAN,DFL}DIR,\
-DEFLIB,\
-SPELLHIST,\
-SULOG}'[^?]/s/\(.*\)=\(.*\)/\1?=\2/;')" \
-	./heirloom-ng-$Version/build/mk.config
-cp "$trash/HeirloomNG.build-mk.config" ./heirloom-ng-$Version/build/mk.config
-
 # Clean source tree.
 [ -e ./heirloom-ng-$Version/Makefile ] \
 	&& gmake -C "./heirloom-ng-$Version" mrproper
 
+# Hard code the configuration at build/mk.config.
 case "$stage" in
 	second)
-		_CFLAGS="-O0 -fomit-frame-pointer"
+		sed >"$trash/HeirloomNG.build-mk.config" \
+		"$(_CFLAGS="-O0 -fomit-frame-pointer" \
 		CFLAGS="$_CFLAGS" \
-			CFLAGSS="$_CFLAGS" \
-			CFLAGS2="$_CFLAGS" \
-			CFLAGSU="$_CFLAGS" \
-			LDFLAGS='$(LIBPATH)' \
-			LIBPATH='-L/llvmtools/lib' \
-			LCURS='-ltermcap -DUSE_TERMCAP'	\
-			DEFBIN=/bin SV3BIN=/bin S42BIN=/bin/s42 \
-			SUSBIN=/bin/posix SU3BIN=/bin/posix2001 UCBBIN=/bin \
-			CCSBIN=/bin \
-			DEFLIB=/lib DEFSBIN=/sbin MANDIR=/tmp/__man__ \
-			DFLDIR=/dev/null SPELLHIST=/dev/null \
-			SULOG=/dev/null \
-			gmake -C "./heirloom-ng-$Version"
+		CFLAGSS="$_CFLAGS" \
+		CFLAGS2="$_CFLAGS" \
+		CFLAGSU="$_CFLAGS" \
+		CPPFLAGS='-D_GNU_SOURCE -DUSE_TERMCAP' \
+		LDFLAGS='$(LIBPATH)' \
+		LIBPATH='-L/llvmtools/lib' \
+		LCURS='-lcurses -lterminfo' \
+		DEFBIN=/bin \
+		SV3BIN=/bin \
+		S42BIN=/bin/s42 \
+		SUSBIN=/bin/posix \
+		SU3BIN=/bin/posix2001 \
+		UCBBIN=/bin/ucb \
+		CCSBIN=/bin \
+		DEFLIB=/lib \
+		DEFSBIN=/sbin \
+		MANDIR=/tmp/__man__ \
+		DFLDIR=/dev/null \
+		SPELLHIST=/dev/null \
+		SULOG=/dev/null \
+		LNS='ln -s' ; \
+		for v in {CFLAGS{,S,2,U},CPPFLAGS,LDFLAGS,LIBPATH,\
+LCURS,{DEF{,S},SV3,S42,SUS,SU3,UCB,CCS}BIN,\
+{MAN,DFL}DIR,DEFLIB,SPELLHIST,SULOG,LNS}; do
+			printf '/^%s/s@\\(.*\\)=.*@\\1= %s@; ' \
+				"$v" "$(eval printf '%s' \"\$$v\")"
+		done)" \
+		./heirloom-ng-$Version/build/mk.config
+		cp "$trash/HeirloomNG.build-mk.config" ./heirloom-ng-$Version/build/mk.config
 		unset _CFLAGS
 		;;
 	final)
 		CFLAGS="$CFLAGS -fomit-frame-pointer -O" \
-			CFLAGSS="$CFLAGS -fomit-frame-pointer -Os" \
-			CFLAGS2="$CFLAGS -O2" \
-			CFLAGSU="$CFLAGS -fomit-frame-pointer -funroll-loops -O2" \
-			DEFBIN=/usr/bin SV3BIN=/usr/5bin S42BIN=/usr/5bin/s42 \
-			SUSBIN=/usr/5bin/posix SU3BIN=/usr/5bin/posix2001 UCBBIN=/usr/ucb \
-			CCSBIN=/usr/ccs/bin \
-			DEFSBIN=/sbin DEFLIB=/usr/lib/5lib MANDIR=/usr/share/man \
-			gmake -C "./heirloom-ng-$Version";;
+		CFLAGSS="$CFLAGS -fomit-frame-pointer -Os" \
+		CFLAGS2="$CFLAGS -O2" \
+		CFLAGSU="$CFLAGS -fomit-frame-pointer -funroll-loops -O2" \
+		DEFBIN=/usr/bin SV3BIN=/usr/5bin S42BIN=/usr/5bin/s42 \
+		SUSBIN=/usr/5bin/posix SU3BIN=/usr/5bin/posix2001 UCBBIN=/usr/ucb \
+		CCSBIN=/usr/ccs/bin \
+		DEFSBIN=/sbin DEFLIB=/usr/lib/5lib MANDIR=/usr/share/man
+		;;
 esac
 
-gmake -C "./heirloom-ng-$Version" \
-	ROOT="$Destdir" install
+gmake -j`nproc` -C "./heirloom-ng-$Version"
+# It needs to be installed as root because of chown.
+elevate gmake -C "./heirloom-ng-$Version" \
+	ROOT="$Destdir" install || true
 
 # Yet to be tested.
 case "$stage" in
 	second)
 	       	# Create symbolic links for the programs that
 		# will be needed at the chroot stage.
+		# PLEASE remember that this IS NOT going to
+		# be copied to the host system's root, but
+		# for $COPA.
 		(
 			cd "$Destdir/../" &&
 				mkdir ./bin &&
-				apply 'ln -s /llvmtools/bin/%1 ./bin/%1' cat dd echo \
-					install ksh ln pwd rm stty
-				ln -s ksh ./bin/sh # Temporary until we build dash later.
+				apply 'ln -s /llvmtools/bin/%1 ./bin/%1' \
+					cat dd echo install ksh ln pwd rm stty
+			ln -s ksh ./bin/sh # Temporary until we build dash later.
+			# Overwrite SVR4-style df, du and ps programs with UCB
+			# ones since we will be using it heavily even in the
+			# final system. Also get apply at the main PATH since it
+			# will be also heavily used.
+			cd "$Destdir/bin" &&
+				elevate apply 'ln -sf ./ucb/%1 ./%1' \
+					apply df du ps
 		)
 		;;
 	final)
