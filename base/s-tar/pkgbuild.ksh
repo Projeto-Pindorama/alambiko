@@ -9,7 +9,7 @@ c -cd "star-$Version.tar.bz2" | tar -xf - -C "$OBJDIR"
 cd "$OBJDIR/star-$Version"
 
 # Clean the source code tree.
-gmake clean
+gmake -j$(nproc) clean
 
 if $xtools; then
 	DESTDIR="${Destdir##*/}"
@@ -21,10 +21,10 @@ else
 	CC=cc
 fi
 
-gmake -j$(nproc) \
-	CC=$CC \
-	INS_BASE="$INS_BASE" \	 &&
-	gmake DESTDIR="$Destdir" \
+# ld.lld will run over its legs if
+# we use more than 2 jobs here.
+gmake CC=$CC INS_BASE="$INS_BASE" \
+	&& gmake DESTDIR="$Destdir" \
 		INS_BASE="$INS_BASE" \
 		INSUSR=root \
 		INSGRP=wheel \
