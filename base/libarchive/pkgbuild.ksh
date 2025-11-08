@@ -9,7 +9,7 @@ c -cd "libarchive-$Version.tar.xz" | tar -xf - -C "$OBJDIR"
 cd "$OBJDIR/libarchive-$Version"
 
 # Clean the source code tree.
-gmake clean
+[ -e Makefile ] && gmake -j$(nproc) distclean
 
 if $xtools; then
 CC=clang \
