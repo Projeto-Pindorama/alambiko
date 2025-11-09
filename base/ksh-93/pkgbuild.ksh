@@ -47,4 +47,6 @@ if ! $xtools; then
 			)
 		)
 	)
+else
+	(cd "$Destdir/bin"; ln -s {k,}sh)
 fi
