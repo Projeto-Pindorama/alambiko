@@ -11,14 +11,12 @@ cd "$OBJDIR/sed-${Version}"
 [ -e Makefile ] && gmake distclean
 if ! $xtools; then
 	configure_opts=(
-		""
+		"--prefix=/usr/gnu"
 	)
 	export CFLAGS LDFLAGS
 else
 	configure_opts=(
 		"--prefix=/"
-		"--host=$COPA_TARGET"
-		"--build=$COPA_HOST"
 	)
 fi
 
