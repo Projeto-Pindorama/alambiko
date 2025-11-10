@@ -32,5 +32,10 @@ else
 	)
 fi
 
-./configure ${configure_opts[@]}
+CFLAGS=' -D__attribute_noreturn__="" -std=c89' \
+       CC=clang \
+       CXX=clang++ \
+       AR=llvm-ar \
+       RANLIB=llvm-ranlib \
+       ./configure ${configure_opts[@]}
 gmake -j$(nproc) && gmake DESTDIR="$Destdir" install
