@@ -26,7 +26,8 @@ for gnulib in 'gettext-tools/gnulib-lib' 'gettext-tools/libgettextpo' 'libtextst
 	cat "$trash/GNUgettext.${gnulib##*/}.obstack.c" >"./$gnulib/obstack.c"
 done
 
-[ -e Makefile ] && gmake clean
+[ -e Makefile ] && (gmake clean; gmake distclean) \
+	|| true # It will fail cleaning gettext-runtime.
 if ! $xtools; then
 	configure_opts=(
 		"--prefix=/usr/ccs"
@@ -49,7 +50,7 @@ else
 	CXX=clang++
 	RANLIB=llvm-ranlib
 	AR=llvm-ar
-	CFLAGS+='-D__attribute_noreturn__=""'
+	CFLAGS+=' -D__attribute_noreturn__=""'
 	export CC CXX RANLIB AR CFLAGS
 fi
 
