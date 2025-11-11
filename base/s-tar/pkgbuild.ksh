@@ -13,7 +13,7 @@ gmake -j$(nproc) clean
 
 if $xtools; then
 	DESTDIR="${Destdir##*/}"
-	INS_BASE=/llvmtools
+	INS_BASE=/
 	CC=clang
 else
 	DESTDIR="$Destdir"
