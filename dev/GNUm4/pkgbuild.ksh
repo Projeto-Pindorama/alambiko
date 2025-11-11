@@ -25,5 +25,9 @@ else
 	)
 fi
 
-./configure ${configure_opts[@]}
+CC=clang \
+CXX=clang++ \
+AR=llvm-ar \
+RANLIB=llvm-ranlib \
+	./configure ${configure_opts[@]}
 gmake -j$(nproc) && gmake DESTDIR="$Destdir" install
