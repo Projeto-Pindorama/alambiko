@@ -48,5 +48,10 @@ if ! $xtools; then
 		)
 	)
 else
-	(cd "$Destdir/bin"; ln -s {k,}sh)
+	# Link ksh to sh and ksh93.
+	(
+		cd "$Destdir/bin"
+		ln -s {k,}sh
+		ln -s ksh{,93}
+	)
 fi
